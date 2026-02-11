@@ -7,6 +7,8 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.100%2B-green)](https://fastapi.tiangolo.com/)
 [![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
 
+**Topics:** cybersecurity, machine-learning, pytorch, fastapi, threat-detection, network-security, intrusion-detection, dashboard
+
 ## 🎯 Overview
 
 An end-to-end machine learning pipeline for detecting and classifying cyber attacks from network traffic data. Train deep learning models on CICIDS2017/UNSW-NB15 datasets, deploy via FastAPI, and visualize threats in real-time through an interactive dashboard.
@@ -29,7 +31,7 @@ An end-to-end machine learning pipeline for detecting and classifying cyber atta
 
 ```bash
 # Clone the repository
-git clone https://github.com/YOUR_USERNAME/ai-cyber-threat-dashboard.git
+git clone https://github.com/Ananyanagaraj11/ai-cyber-threat-dashboard.git
 cd ai-cyber-threat-dashboard
 
 # Install dependencies
@@ -130,7 +132,7 @@ ai-cyber-threat-dashboard/
    git init
    git add .
    git commit -m "Initial commit"
-   git remote add origin https://github.com/YOUR_USERNAME/ai-cyber-threat-dashboard.git
+   git remote add origin https://github.com/Ananyanagaraj11/ai-cyber-threat-dashboard.git
    git push -u origin main
    ```
 
@@ -188,7 +190,7 @@ MIT License - feel free to use for research, learning, or internal SOC tooling.
 
 - **Live Demo:** [Deploy to Vercel](DEPLOY.md)
 - **Documentation:** See `DEPLOY.md`, `GITHUB_SETUP.md`, `TRAINING_AND_CSV_CHECK.md`
-- **Issues:** [GitHub Issues](https://github.com/YOUR_USERNAME/ai-cyber-threat-dashboard/issues)
+- **Issues:** [GitHub Issues](https://github.com/Ananyanagaraj11/ai-cyber-threat-dashboard/issues)
 
 ---
 
