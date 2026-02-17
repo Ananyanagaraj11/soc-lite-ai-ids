@@ -1,63 +1,26 @@
-# Live demo – shareable URL
+# Live demo in 2 steps
 
-Two ways to get a **live demo URL** you can share (e.g. LinkedIn).
+## 1. Deploy the backend (Render, free)
 
----
-
-## Option 1: One-click local live URL (ngrok)
-
-1. **Install ngrok** (one time): https://ngrok.com/download  
-   Or: `winget install ngrok` / `choco install ngrok`
-
-2. **Run the live demo script** (from project folder):
-   ```bash
-   scripts\run_live_demo.bat
-   ```
-   - A window opens with the backend.
-   - After a few seconds, ngrok starts and prints a **public HTTPS URL** (e.g. `https://abc123.ngrok-free.app`).
-
-3. **Share that URL** – anyone can open it and use Index → CSV Analysis → Dashboard.
-
-4. Stop with Ctrl+C in the ngrok window. Close the backend window when done.
-
----
-
-## Option 2: Deploy online (always-on demo URL)
-
-Deploy the app so it has a permanent URL (e.g. `https://your-app.onrender.com`).
-
-### Using Render (free tier)
-
-1. Push the project to **GitHub** (include `backend/artifacts/` or add a build step that runs training/copy_artifacts).
-
-2. Go to **https://render.com** → New → Web Service.
-
-3. Connect your repo. Set:
-   - **Build command:** `pip install -r requirements.txt`
+1. Go to [render.com](https://render.com) and sign in with GitHub.
+2. **New** → **Web Service**.
+3. Connect repo: `Ananyanagaraj11/ai-cyber-threat-dashboard`.
+4. Use these settings:
+   - **Name:** `cyber-threat-backend` (so the URL is `https://cyber-threat-backend.onrender.com`)
+   - **Environment:** Python 3
+   - **Build command:** `pip install -r requirements-render.txt`
    - **Start command:** `uvicorn backend.app:app --host 0.0.0.0 --port $PORT`
-   - **Root directory:** (leave blank if app is at repo root)
+   - **Instance type:** Free
+5. Click **Create Web Service**. Wait for the first deploy (can take 10–20 min for PyTorch).
+6. Copy the service URL (e.g. `https://cyber-threat-backend.onrender.com`). If you used a different name, copy that URL.
 
-4. If you use the **Dockerfile** instead:
-   - New → Web Service → connect repo.
-   - Select **Docker** as environment. Render will use the Dockerfile.
+## 2. Point the frontend at the backend
 
-5. After deploy, your live demo URL is: `https://<your-service-name>.onrender.com`
+- **Vercel:** In your Vercel project → **Settings** → **Environment Variables** → add `API_URL` = your Render URL (e.g. `https://cyber-threat-backend.onrender.com`). Then **Redeploy** the latest deployment.
+- **GitHub Pages:** If your backend URL is different from `https://cyber-threat-backend.onrender.com`, edit `docs/js/config.js` and set `ENV_API_BASE` to that URL, then push.
 
-### Using Docker locally (then share via ngrok)
-
-```bash
-# From project root (after copy_artifacts)
-docker build -t cyber-threat-demo .
-docker run -p 8000:8000 cyber-threat-demo
-# Then: ngrok http 8000
-```
+If you kept the backend name `cyber-threat-backend`, the frontend is already configured to use that URL and you only need to redeploy Vercel (or do nothing for GitHub Pages) after the backend is live.
 
 ---
 
-## Quick reference
-
-| Method              | URL                          | Best for              |
-|---------------------|------------------------------|------------------------|
-| Local only          | http://localhost:8000        | Testing on your PC     |
-| ngrok (run script)  | https://xxx.ngrok-free.app   | Quick shareable demo   |
-| Render / Railway    | https://your-app.onrender.com| Always-on public demo  |
+**Result:** Your Vercel (and GitHub Pages) site will call the Render backend; **CSV Analysis** and **Dashboard** will work as a live demo.

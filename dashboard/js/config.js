@@ -1,3 +1,2 @@
-// Backend API URL. On Vercel, set Vercel env var NEXT_PUBLIC_API_URL or edit this.
-// Backend cannot run on Vercel (use Railway, Fly.io, or run locally).
-window.ENV_API_BASE = window.ENV_API_BASE || null;
+// Backend API URL. Default: Render backend (see LIVE_DEMO.md). Override with Vercel env API_URL.
+window.ENV_API_BASE = window.ENV_API_BASE || "https://cyber-threat-backend.onrender.com";
