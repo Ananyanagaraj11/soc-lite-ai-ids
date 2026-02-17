@@ -89,10 +89,10 @@ try:
     model.load_state_dict(checkpoint["model_state_dict"])
     model.eval()
 
-    print("✅ Model loaded successfully")
+    print("[OK] Model loaded successfully")
 
 except Exception as e:
-    print("❌ Model load error:", e)
+    print("[ERROR] Model load error:", e)
 
 # ========================= MEMORY STORE =========================
 last_analysis_store = {}

@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SOC Lite – CSV Analysis Module</title>
+<script src="js/config.js"></script>
 <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 
 <style>
@@ -258,8 +259,8 @@ async function analyzeFile(){
         showResults(data);
     } catch(e) {
         console.error(e);
-        var msg = e.name === 'AbortError' ? 'Request timed out. Try a smaller CSV (under 10MB) or try again.' : ('Analysis failed. ' + (e.message || ''));
-        if (e.message && e.message.indexOf('Failed') !== -1) msg = 'Network error. Backend may be starting—wait 30s and try again, or use a smaller CSV.';
+        var msg = e.name === 'AbortError' ? 'Request timed out. Try again.' : ('Analysis failed. ' + (e.message || ''));
+        if (e.message && e.message.indexOf('Failed') !== -1) msg = 'Network error. Backend may be starting—wait 30s and try again.';
         alert(msg);
         progressSection.style.display='none';
     }

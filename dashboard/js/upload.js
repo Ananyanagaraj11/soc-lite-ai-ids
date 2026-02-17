@@ -2,7 +2,7 @@
    SOC Lite – CSV Upload Controller
    ====================================== */
 
-const API_BASE = window.location.origin;
+const API_BASE = (window.ENV_API_BASE != null && window.ENV_API_BASE !== "") ? window.ENV_API_BASE : window.location.origin;
 
 let selectedFile = null;
 
