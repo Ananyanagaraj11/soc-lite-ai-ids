@@ -232,7 +232,7 @@ fileInput.addEventListener('change',function(){
     }
 });
 
-/* ANALYZE FILE – real backend call */
+/* ANALYZE FILE – real backend call (long timeout for Render cold start) */
 async function analyzeFile(){
     if(!selectedFile){ alert('Please select a CSV file.'); return; }
     var progressSection=document.getElementById('progressSection');
@@ -245,9 +245,12 @@ async function analyzeFile(){
         var formData=new FormData();
         formData.append('file',selectedFile);
         progressFill.style.width='40%';
-        progressText.textContent='Analyzing with AI model...';
-        var response = await fetch((API_BASE||'')+'/analyze/csv',{ method:'POST', body:formData });
-        if(!response.ok) throw new Error('Server error');
+        progressText.textContent='Analyzing with AI model... (first time may take up to 60s on free hosting)';
+        var controller = new AbortController();
+        var timeoutId = setTimeout(function(){ controller.abort(); }, 120000);
+        var response = await fetch((API_BASE||'')+'/analyze/csv',{ method:'POST', body:formData, signal: controller.signal });
+        clearTimeout(timeoutId);
+        if(!response.ok) throw new Error('Server error ' + response.status);
         var data = await response.json();
         if(!data.success) throw new Error(data.error||'Analysis failed');
         progressFill.style.width='100%';
@@ -255,7 +258,8 @@ async function analyzeFile(){
         showResults(data);
     } catch(e) {
         console.error(e);
-        alert('Analysis failed. Is the backend running?');
+        var msg = e.name === 'AbortError' ? 'Request timed out. On free hosting the first request can take ~60s—please try again.' : ('Analysis failed. ' + (e.message || ''));
+        alert(msg);
         progressSection.style.display='none';
     }
 }
