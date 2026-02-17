@@ -23,4 +23,4 @@ If you kept the backend name `cyber-threat-backend`, the frontend is already con
 
 ---
 
-**Result:** Your Vercel (and GitHub Pages) site will call the Render backend; **CSV Analysis** and **Dashboard** will work as a live demo.
+**Result:** Your Vercel (and GitHub Pages) site will call the Render backend; **CSV Analysis** and **Dashboard** will work as a live demo. Full dataset analyzed (no file or row limits).
