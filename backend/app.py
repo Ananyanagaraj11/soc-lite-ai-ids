@@ -149,108 +149,111 @@ def predict(request: PredictionRequest):
 # ========================= CSV ANALYSIS =========================
 @app.post("/analyze/csv")
 async def analyze_csv(file: UploadFile = File(...)):
-
     if model is None:
         return {"success": False, "error": "Model not loaded"}
+    try:
+        contents = await file.read()
+        if len(contents) > 15_000_000:
+            return {"success": False, "error": "File too large. Use a CSV under 15MB for the demo."}
+        df = pd.read_csv(StringIO(contents.decode("utf-8")))
 
-    contents = await file.read()
-    if len(contents) > 15_000_000:
-        return {"success": False, "error": "File too large. Use a CSV under 15MB for the demo."}
-    df = pd.read_csv(StringIO(contents.decode("utf-8")))
+        original_row_count = len(df)
 
-    original_row_count = len(df)
+        # Detect label column
+        label_col = None
+        if "Label" in df.columns:
+            label_col = "Label"
+        elif " Label" in df.columns:
+            label_col = " Label"
 
-    # Detect label column
-    label_col = None
-    if "Label" in df.columns:
-        label_col = "Label"
-    elif " Label" in df.columns:
-        label_col = " Label"
+        actual_labels = None
+        if label_col:
+            actual_labels = df[label_col].values
+            df = df.drop(columns=[label_col])
 
-    actual_labels = None
-    if label_col:
-        actual_labels = df[label_col].values
-        df = df.drop(columns=[label_col])
+        numeric_df = df.select_dtypes(include=[np.number])
+        numeric_df = numeric_df.replace([np.inf, -np.inf], np.nan).fillna(0)
 
-    numeric_df = df.select_dtypes(include=[np.number])
-    numeric_df = numeric_df.replace([np.inf, -np.inf], np.nan).fillna(0)
+        # Cap rows so analysis finishes within Render 30s request timeout (~3k rows is safe)
+        max_rows_analyze = 3_000
+        if len(numeric_df) > max_rows_analyze:
+            numeric_df = numeric_df.head(max_rows_analyze)
+            if actual_labels is not None:
+                actual_labels = actual_labels[:max_rows_analyze]
+        original_row_count = len(numeric_df)
 
-    # Cap rows so analysis finishes within Render 30s request timeout (~3k rows is safe)
-    max_rows_analyze = 3_000
-    if len(numeric_df) > max_rows_analyze:
-        numeric_df = numeric_df.head(max_rows_analyze)
-        if actual_labels is not None:
-            actual_labels = actual_labels[:max_rows_analyze]
-    original_row_count = len(numeric_df)
+        features = numeric_df.values
+        features_scaled = scaler.transform(features)
 
-    features = numeric_df.values
-    features_scaled = scaler.transform(features)
+        with torch.no_grad():
+            outputs = model(torch.FloatTensor(features_scaled))
+            probabilities = torch.softmax(outputs, dim=1)
+            predicted_indices = torch.argmax(probabilities, dim=1)
 
-    with torch.no_grad():
-        outputs = model(torch.FloatTensor(features_scaled))
-        probabilities = torch.softmax(outputs, dim=1)
-        predicted_indices = torch.argmax(probabilities, dim=1)
+        predicted_indices = predicted_indices.numpy()
+        probabilities = probabilities.numpy()
 
-    predicted_indices = predicted_indices.numpy()
-    probabilities = probabilities.numpy()
+        predictions = []
+        class_counts = {}
 
-    predictions = []
-    class_counts = {}
+        for i in range(len(features)):
+            predicted_class = classes[predicted_indices[i]]
+            confidence = float(probabilities[i][predicted_indices[i]])
 
-    for i in range(len(features)):
-        predicted_class = classes[predicted_indices[i]]
-        confidence = float(probabilities[i][predicted_indices[i]])
+            class_counts[predicted_class] = class_counts.get(predicted_class, 0) + 1
 
-        class_counts[predicted_class] = class_counts.get(predicted_class, 0) + 1
+            pred_obj = {
+                "index": i,
+                "predicted_class": predicted_class,
+                "confidence": confidence
+            }
 
-        pred_obj = {
-            "index": i,
-            "predicted_class": predicted_class,
-            "confidence": confidence
+            if actual_labels is not None:
+                pred_obj["actual_label"] = str(actual_labels[i])
+
+            predictions.append(pred_obj)
+
+        attack_count = sum(
+            count for cls, count in class_counts.items() if cls != "BENIGN"
+        )
+
+        # Confidence buckets: 0-20%, 20-40%, 40-60%, 60-80%, 80-100% (inclusive boundaries)
+        confidence_buckets = [0, 0, 0, 0, 0]
+        for i in range(len(probabilities)):
+            pct = round(float(probabilities[i][predicted_indices[i]]) * 100)
+            pct = max(0, min(100, pct))
+            if pct <= 20:
+                idx = 0
+            elif pct <= 40:
+                idx = 1
+            elif pct <= 60:
+                idx = 2
+            elif pct <= 80:
+                idx = 3
+            else:
+                idx = 4
+            confidence_buckets[idx] += 1
+
+        result = {
+            "success": True,
+            "total_rows": original_row_count,
+            "predictions": predictions[:1000],  # send up to 1000 for dashboard table; summary is from full analysis
+            "summary": {
+                "class_distribution": class_counts,
+                "total_attacks": attack_count,
+                "total_benign": class_counts.get("BENIGN", 0),
+                "attack_percentage": (attack_count / original_row_count * 100),
+                "confidence_buckets": confidence_buckets,
+            }
         }
 
-        if actual_labels is not None:
-            pred_obj["actual_label"] = str(actual_labels[i])
+        last_analysis_store["data"] = result
 
-        predictions.append(pred_obj)
-
-    attack_count = sum(
-        count for cls, count in class_counts.items() if cls != "BENIGN"
-    )
-
-    # Confidence buckets: 0-20%, 20-40%, 40-60%, 60-80%, 80-100% (inclusive boundaries)
-    confidence_buckets = [0, 0, 0, 0, 0]
-    for i in range(len(probabilities)):
-        pct = round(float(probabilities[i][predicted_indices[i]]) * 100)
-        pct = max(0, min(100, pct))
-        if pct <= 20:
-            idx = 0
-        elif pct <= 40:
-            idx = 1
-        elif pct <= 60:
-            idx = 2
-        elif pct <= 80:
-            idx = 3
-        else:
-            idx = 4
-        confidence_buckets[idx] += 1
-
-    result = {
-        "success": True,
-        "total_rows": original_row_count,
-        "predictions": predictions[:1000],  # send up to 1000 for dashboard table; summary is from full analysis
-        "summary": {
-            "class_distribution": class_counts,
-            "total_attacks": attack_count,
-            "total_benign": class_counts.get("BENIGN", 0),
-            "attack_percentage": (attack_count / original_row_count * 100),
-            "confidence_buckets": confidence_buckets,
-        }
-    }
-
-    last_analysis_store["data"] = result
-
-    return result
+        return result
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {"success": False, "error": str(e)}
 
 # ========================= START SERVER =========================
 if __name__ == "__main__":
