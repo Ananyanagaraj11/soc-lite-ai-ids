@@ -9,6 +9,44 @@
 
 **Topics:** cybersecurity, machine-learning, pytorch, fastapi, threat-detection, network-security, intrusion-detection, dashboard
 
+<p align="center">
+  <a href="https://ai-cyber-threat-dashboard-1.onrender.com/"><strong>Live demo</strong></a> ·
+  <a href="https://ai-cyber-threat-dashboard-1.onrender.com/docs"><strong>API docs</strong></a> ·
+  <a href="#-quick-start"><strong>Run locally</strong></a> ·
+  <a href="#-sample-data"><strong>Sample data</strong></a>
+</p>
+
+## Live demo
+
+**[https://ai-cyber-threat-dashboard-1.onrender.com/](https://ai-cyber-threat-dashboard-1.onrender.com/)** — SOC dashboard + FastAPI backend (upload CSV, view threat KPIs and charts)
+
+| Environment | URL |
+|-------------|-----|
+| **Public app (Render)** | [ai-cyber-threat-dashboard-1.onrender.com](https://ai-cyber-threat-dashboard-1.onrender.com/) |
+| **Swagger** | [/docs](https://ai-cyber-threat-dashboard-1.onrender.com/docs) |
+| **Health** | [/health](https://ai-cyber-threat-dashboard-1.onrender.com/health) |
+| **Local** | http://localhost:8000/ |
+
+## 📊 Sample data
+
+Bundled CSV for training and dashboard demos (no external dataset required):
+
+| File | Rows | Features | Labels |
+|------|------|----------|--------|
+| [`data/sample_data.csv`](data/sample_data.csv) | **3,000** | `f1`–`f20` (20) | **1,819 Normal**, **1,181 Attack** |
+
+```bash
+# Regenerate if missing
+python scripts/generate_sample_data.py
+
+# Train on sample data (quick local demo)
+python training/train.py --data data/sample_data.csv
+
+# Analyze via API
+curl -X POST "https://ai-cyber-threat-dashboard-1.onrender.com/analyze/csv" \
+  -F "file=@data/sample_data.csv"
+```
+
 ## 🎯 Overview
 
 An end-to-end machine learning pipeline for detecting and classifying cyber attacks from network traffic data. Train deep learning models on CICIDS2017/UNSW-NB15 datasets, deploy via FastAPI, and visualize threats in real-time through an interactive dashboard.
@@ -57,6 +95,7 @@ cp training/outputs/*.pt training/outputs/*.joblib training/outputs/*.txt backen
 python -m uvicorn backend.app:app --host 0.0.0.0 --port 8000
 
 # Open in browser: http://localhost:8000
+# Try sample CSV: data/sample_data.csv
 ```
 
 **Flow:** Index → CSV Analysis → Upload CSV → Analyze File → Dashboard → View Results
@@ -106,6 +145,7 @@ soc-lite-ai-ids/
 │   ├── train.py            # PyTorch MLP training
 │   └── evaluate.py         # Model evaluation & metrics
 ├── scripts/
+│   ├── generate_sample_data.py  # Create data/sample_data.csv (3k rows)
 │   ├── run_backend.bat     # Start backend
 │   ├── copy_artifacts.bat  # Copy model to backend
 │   └── git_setup.bat       # Initialize git repo
@@ -147,7 +187,7 @@ soc-lite-ai-ids/
    - Update `dashboard/js/config.js` with your Render backend URL
    - Push → Auto-redeploys
 
-**Live Demo:** `https://your-repo-name.vercel.app`
+**Live Demo:** [https://ai-cyber-threat-dashboard-1.onrender.com/](https://ai-cyber-threat-dashboard-1.onrender.com/)
 
 See **[DEPLOY.md](DEPLOY.md)** for detailed steps.
 
@@ -188,7 +228,8 @@ MIT License - feel free to use for research, learning, or internal SOC tooling.
 
 ## 🔗 Links
 
-- **Live Demo:** [Deploy to Vercel](DEPLOY.md)
+- **Live Demo:** [https://ai-cyber-threat-dashboard-1.onrender.com/](https://ai-cyber-threat-dashboard-1.onrender.com/)
+- **Sample CSV:** [`data/sample_data.csv`](data/sample_data.csv) (3,000 rows)
 - **Documentation:** See `DEPLOY.md`, `GITHUB_SETUP.md`, `TRAINING_AND_CSV_CHECK.md`
 - **Issues:** [GitHub Issues](https://github.com/Ananyanagaraj11/soc-lite-ai-ids/issues)
 
